@@ -1,0 +1,10 @@
+{
+    "toolName": "Roastman",
+    "alias": "roastman",
+    "actions": [
+        {
+            "name": "Run",
+            "description": "Does Postman Stuff!"
+        }
+    ]
+}
