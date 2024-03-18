@@ -3,8 +3,8 @@
     "alias": "roastman",
     "actions": [
         {
-            "name": "Run",
-            "description": "Does Postman Stuff!"
+            "name": "-",
+            "description": "Run = accepts the following parameters:\n\nselect:\t\tPull up the collections list for selection\nadd:\t\tAdd a new request\nnew:\t\tAdd a new collection\nuse:\t\tPass in name of request, to run request without requiring selection"
         }
     ]
 }

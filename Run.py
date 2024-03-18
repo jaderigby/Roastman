@@ -22,7 +22,6 @@ def execute(ARGS):
 		rn = select
 
 	if add:	
-
 		newRequest = {}
 		newRequest['url'] = ""
 		newRequest['method'] = ""
@@ -71,7 +70,7 @@ def execute(ARGS):
 				MAIN_FILE = rn
 			)
 			roastmanStr = helpers.read_file(settingsFile)
-			roastmanObj = ast.literal_eval(roastmanStr)
+			roastmanObj = helpers.stitch_roastman_obj(roastmanStr)
 			configFile = '{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
 				ROOT = helpers.path('utility'), 
 				ROASTMAN_COLLECTIONS = settings['roastman'],
@@ -135,61 +134,8 @@ def execute(ARGS):
 
 				# 	return updated_data1_str
 
-				def stitch_config2(DATA1, DATA2):
-					import re
-
-					if DATA1:
-						pat = '<% .* %>'
-						
-						for key, value in DATA1['headers'].items():
-							match = re.search(pat, value)
-							
-							if match:
-								placeholder_key = match.group().strip('<% | %>')
-
-								returnVal = False
-
-								if ':' in placeholder_key:
-									parts = placeholder_key.split(':')
-									ref = ''
-									TEMP = DATA2
-									for index, elem in enumerate(parts):
-										if type(TEMP) is dict and index < (len(parts) - 1):
-											ref = TEMP[elem]
-											TEMP = ref
-										elif type(TEMP) is dict:
-											ref = TEMP[elem]
-											returnVal = ref
-										else:
-											cookieObj = TEMP.split('; ')[0]
-											newObj = {}
-											cookieVal = cookieObj.split('=')
-											newObj[cookieVal[0]] = cookieVal[1]
-											if elem in newObj:
-												returnVal = value.replace(match.group(), newObj[elem])
-									
-									if returnVal:
-										DATA1['headers'][key] = returnVal
-
-								else:
-									DATA1['headers'][key] = DATA2['body'][placeholder_key]
-
-					return DATA1
-				
-				def stitch_url(URL, DATA):
-					formattedUrl = ''
-					if DATA and 'path' in DATA:
-						if '{'in URL:
-							URL.split("{")[1].split("}")[0]
-							formattedUrl = URL.format(**DATA['path'])
-						else:
-							formattedUrl = URL
-					else:
-						formattedUrl = URL
-					return formattedUrl
-
-				formattedConfig = stitch_config2(secondConfig, formattedPayload)
-				formattedUrl = stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig)
+				formattedConfig = helpers.stitch_config2(secondConfig, formattedPayload)
+				formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig)
 
 				rnSecondCmd = helpers.curl_cmd2(formattedUrl, formattedConfig, True)
 
@@ -235,7 +181,9 @@ def execute(ARGS):
 
 		elif nw:
 			collectionContent = '''{
-	"token" : {
+	"variables": {
+	}
+	,"token" : {
 		"url": ""
 		,"method": ""
 		,"config": "token_config.yaml"
