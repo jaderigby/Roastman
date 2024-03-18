@@ -14,7 +14,7 @@ An api tester/manager similar to Postman.
 
 `roastman - select:exampleCollection add:someRequest`: Add a new request.
 
-`roastman - select:exampleCollection use:someRequest`: Demonstrates using `use` to pass a value, rather than selecting the request from a numeeric list.
+`roastman - select:exampleCollection use:someRequest`: Demonstrates using `use` to pass a value, rather than selecting the request from a numeric list.
 
 ## Settings File Features ##
 
