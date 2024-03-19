@@ -93,7 +93,7 @@ def execute(ARGS):
 			config = yaml.safe_load(helpers.read_file(configFile))
 
 			if 'show' in roastmanObj['token'] and roastmanObj['token']['show'] == True:
-				rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config)
+				rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config, roastmanObj['token']['method'])
 
 				payload = helpers.run_command_output(rnCmd, False)
 				formattedPayload = helpers.format_response(payload)
@@ -109,7 +109,7 @@ def execute(ARGS):
 					joinedData = helpers.handle_yaml_record(formattedPayload)
 					helpers.write_file(tokenResultFile, joinedData)
 			else:
-				rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config, False)
+				rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config, roastmanObj['token']['method'], False)
 
 				payload = helpers.run_command_output(rnCmd, False)
 				formattedPayload = helpers.format_response(payload)
@@ -148,7 +148,7 @@ def execute(ARGS):
 				formattedConfig = helpers.stitch_config2(secondConfig, formattedPayload)
 				formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig)
 
-				rnSecondCmd = helpers.curl_cmd2(formattedUrl, formattedConfig, True)
+				rnSecondCmd = helpers.curl_cmd2(formattedUrl, formattedConfig, roastmanObj['requests'][optionSelectionName]['method'])
 
 				valid = True
 				result = helpers.run_command_output(rnSecondCmd, False)

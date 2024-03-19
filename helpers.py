@@ -187,10 +187,17 @@ def curl_cmd(URL, CONFIGS={}):
 		contentStr += bodySuffix
 	return prefix + contentStr + suffix
 
-def curl_cmd2(URL, CONFIGS={}, option = True):
+def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 	curlList = []
 
-	curlPrefix = """curl -s --location '{}' \\""".format(URL)
+	methodDef = ''
+
+	if METHOD == 'post':
+		methodDef = '--request POST '
+	elif METHOD == 'put':
+		methodDef = '--request PUT '
+
+	curlPrefix = """curl -s --location {}'{}' \\""".format(methodDef, URL)
 	curlSuffix = "\n-D -"
 
 	headerList = []
