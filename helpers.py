@@ -358,8 +358,11 @@ def format_response(RESPONSE):
 def list_files(directory):
 	import os
 
-	visible_only = [file for file in os.listdir(directory) if not file.startswith('.')]
-	visible_only_sorted = sorted(visible_only)
+	visible_only_sorted = []
+
+	if os.path.isdir(directory):
+		visible_only = [file for file in os.listdir(directory) if not file.startswith('.')]
+		visible_only_sorted = sorted(visible_only)
 
 	return visible_only_sorted
 

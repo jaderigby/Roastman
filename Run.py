@@ -12,9 +12,28 @@ def execute(ARGS):
 	add = helpers.kv_set(argDict, 'add')
 	booyah = helpers.kv_set(argDict, 'booyah')
 	use = helpers.kv_set(argDict, 'use')
+	here = helpers.kv_set(argDict, 'here')
+
+	collectionsPath = ''
+
+	if here == 't':
+		collectionsPath = '{}/roastman_collections'.format(
+			helpers.run_command_output('pwd', False).strip('\n')
+		)
+		msg.running_from(collectionsPath)
+	elif here:
+		collectionsPath = '{}/roastman_collections'.format(
+			here
+		)
+		msg.running_from(collectionsPath)
+	else:
+		collectionsPath = '{}/profiles/{}'.format(
+			helpers.path('utility'),
+			settings['roastman']
+		)
 
 	if select == 't':
-		options = helpers.list_files('{}/profiles/{}'.format(helpers.path('utility'), settings['roastman']))
+		options = helpers.list_files(collectionsPath)
 		selection = helpers.user_selection("Select: ", options)
 		if selection != 'exit':
 			rn = options[selection - 1]
@@ -29,9 +48,8 @@ def execute(ARGS):
 			REQUEST = add
 		)
 		
-		DATA = helpers.read_file('{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FOLDER}.py'.format(
-			ROOT = helpers.path('utility'),
-			ROASTMAN_COLLECTIONS = settings['roastman'],
+		DATA = helpers.read_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FOLDER}.py'.format(
+			ROASTMAN_COLLECTIONS = collectionsPath,
 			MAIN_FOLDER = rn
 		))
 
@@ -39,23 +57,20 @@ def execute(ARGS):
 
 		DATA_FORMATTED['requests'][add] = newRequest
 
-		helpers.write_file('{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FOLDER}.py'.format(
-			ROOT = helpers.path('utility'),
-			ROASTMAN_COLLECTIONS = settings['roastman'],
+		helpers.write_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FOLDER}.py'.format(
+			ROASTMAN_COLLECTIONS = collectionsPath,
 			MAIN_FOLDER = rn
 		), json.dumps(DATA_FORMATTED, indent=4))
 
-		helpers.write_file('{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{REQUEST}_config.yaml'.format(
-			ROOT = helpers.path('utility'),
-			ROASTMAN_COLLECTIONS = settings['roastman'],
+		helpers.write_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{REQUEST}_config.yaml'.format(
+			ROASTMAN_COLLECTIONS = collectionsPath,
 			MAIN_FOLDER = rn,
 			REQUEST = add
 		), '')
 
-		helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{REQUEST}_config.yaml'.format(
+		helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{REQUEST}_config.yaml'.format(
 			ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
-			ROOT = helpers.path('utility'),
-			ROASTMAN_COLLECTIONS = settings['roastman'],
+			ROASTMAN_COLLECTIONS = collectionsPath,
 			MAIN_FOLDER = rn,
 			REQUEST = add
 		))
@@ -63,17 +78,15 @@ def execute(ARGS):
 	else:
 
 		if rn:
-			settingsFile = '{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
-				ROOT = helpers.path('utility'), 
-				ROASTMAN_COLLECTIONS = settings['roastman'], 
+			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
+				ROASTMAN_COLLECTIONS = collectionsPath, 
 				MAIN_FOLDER = rn,
 				MAIN_FILE = rn
 			)
 			roastmanStr = helpers.read_file(settingsFile)
 			roastmanObj = helpers.stitch_roastman_obj(roastmanStr)
-			configFile = '{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
-				ROOT = helpers.path('utility'), 
-				ROASTMAN_COLLECTIONS = settings['roastman'],
+			configFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
+				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = rn,
 				MAIN_FILE = roastmanObj['token']['config']
 			)
@@ -88,9 +101,8 @@ def execute(ARGS):
 				msg.curl_result(json.dumps(formattedPayload['body'], indent=4))
 
 				if 'record' in roastmanObj['token']:
-					tokenResultFile = '{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{TOKEN_RECORD}'.format(
-						ROOT = helpers.path('utility'),
-						ROASTMAN_COLLECTIONS = settings['roastman'],
+					tokenResultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{TOKEN_RECORD}'.format(
+						ROASTMAN_COLLECTIONS = collectionsPath,
 						MAIN_FOLDER = rn,
 						TOKEN_RECORD = roastmanObj['token']['record']
 					)
@@ -114,9 +126,8 @@ def execute(ARGS):
 
 			if optionSelection != 'exit' or optionSelectionName:
 				optionSelectionName = optionSelectionName if optionSelectionName else optionList[optionSelection - 1]
-				configData = helpers.read_file('{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
-					ROOT = helpers.path('utility'), 
-					ROASTMAN_COLLECTIONS = settings['roastman'],
+				configData = helpers.read_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
+					ROASTMAN_COLLECTIONS = collectionsPath,
 					MAIN_FOLDER = rn,
 					MAIN_FILE = roastmanObj['requests'][optionSelectionName]['config'])
 				)
@@ -154,9 +165,8 @@ def execute(ARGS):
 						joinedData = helpers.handle_yaml_record(data)
 						
 						# formattedData = json.dumps(data, indent=4)
-						resultFile = '{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{RECORD_FOLDER}'.format(
-							ROOT = helpers.path('utility'),
-							ROASTMAN_COLLECTIONS = settings['roastman'],
+						resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{RECORD_FOLDER}'.format(
+							ROASTMAN_COLLECTIONS = collectionsPath,
 							MAIN_FOLDER = rn,
 							RECORD_FOLDER = roastmanObj['requests'][optionSelectionName]['record']
 						)
@@ -166,16 +176,14 @@ def execute(ARGS):
 						msg.curl_result(json.dumps(formattedResult['body'], indent=4))
 		
 		elif config:
-			settingsFile = '{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
-				ROOT = helpers.path('utility'), 
-				ROASTMAN_COLLECTIONS = settings['roastman'],
+			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
+				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = config
 			)
 			roastmanStr = helpers.read_file(settingsFile)
-			helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
+			helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
 				ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
-				ROOT = helpers.path('utility'), 
-				ROASTMAN_COLLECTIONS = settings['roastman'],
+				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = config
 			))
 
@@ -200,26 +208,22 @@ def execute(ARGS):
 	'''
 			tokenContent = '''
 	'''
-			helpers.run_command('mkdir {ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}'.format(
-				ROOT = helpers.path('utility'),
-				ROASTMAN_COLLECTIONS = settings['roastman'],
+			helpers.run_command('mkdir {ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}'.format(
+				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = nw
 			))
-			helpers.run_command('mkdir {ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/records'.format(
-				ROOT = helpers.path('utility'),
-				ROASTMAN_COLLECTIONS = settings['roastman'],
+			helpers.run_command('mkdir {ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/records'.format(
+				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = nw
 			))
-			helpers.write_file('{ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FOLDER}.py'.format(
+			helpers.write_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FOLDER}.py'.format(
 				CONTENT = collectionContent,
-				ROOT = helpers.path('utility'),
-				ROASTMAN_COLLECTIONS = settings['roastman'],
+				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = nw,
 				TOKEN_CONTENT = tokenContent
 			), collectionContent)
-			helpers.run_command('touch {ROOT}/profiles/{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
-				ROOT = helpers.path('utility'),
-				ROASTMAN_COLLECTIONS = settings['roastman'],
+			helpers.run_command('touch {ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
+				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = nw,
 				TOKEN_CONTENT = tokenContent
 			))

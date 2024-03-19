@@ -55,3 +55,9 @@ def curl_result(ITEM):
 
 def response_error(ITEM):
 	print('\n{}\n'.format(helpers.decorate('yellow', ITEM)))
+
+def running_from(ITEM):
+	print('\n{}: {}\n'.format(
+		helpers.decorate('bold', 'Running Roastman Collections from'),
+		helpers.decorate('yellow', ITEM)
+	))
