@@ -2,6 +2,8 @@
 
 ≈≈≈ Made With Bacon!
 
+Licensed under MIT
+
 ## Description ##
 
 An api tester/manager similar to Postman.
