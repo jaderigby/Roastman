@@ -187,6 +187,31 @@ def curl_cmd(URL, CONFIGS={}):
 		contentStr += bodySuffix
 	return prefix + contentStr + suffix
 
+def marked_val(VAL):
+	import json
+	
+	if VAL is None:
+		return '___markedVal({})'.format('null')
+	elif VAL is True:
+		return '___markedVal({})'.format('true')
+	elif VAL is False:
+		return '___markedVal({})'.format('false')
+	else:
+		return VAL
+
+def resolve_marked_val(VAL):
+	import re, json
+
+	pat = '__markedVal(.*)'
+	formattedVal = VAL
+
+	if type(VAL) == str:
+		match = re.search(pat, VAL)
+		if match:
+			formattedVal = match.group().strip('___markedVal\(').strip('\)')
+	
+	return formattedVal
+
 def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 	curlList = []
 
@@ -210,7 +235,9 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 
 		if 'headers' in CONFIGS.keys():
 			for key, val in CONFIGS['headers'].items():
-				headerList.append("\n--header '{}: {}' \\".format(key, val))
+				markedVal = marked_val(val)
+				formattedVal = resolve_marked_val(markedVal)
+				headerList.append("\n--header '{}: {}' \\".format(key, formattedVal))
 		if 'body' in CONFIGS.keys():
 			bodyPrefix = '''\n--data '{'''
 			bodySuffix = "}' \\"
@@ -218,13 +245,17 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 			total_items = len(CONFIGS['body'])
 
 			for index, (key, val) in enumerate(CONFIGS['body'].items()):
+
 				if type(val) == str:
 					val = '"{}"'.format(val)
+
+				markedVal = marked_val(val)
+				formattedVal = resolve_marked_val(markedVal)
 					
 				if index == total_items - 1:
-					bodyList.append('''\n\t"{}": {}\n'''.format(key, val))
+					bodyList.append('''\n\t"{}": {}\n'''.format(key, formattedVal))
 				else:
-					bodyList.append('''\n\t"{}": {},'''.format(key, val))
+					bodyList.append('''\n\t"{}": {},'''.format(key, formattedVal))
 			bodyList.append(bodySuffix)
 		
 	curlList.append(curlPrefix)
