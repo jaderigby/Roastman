@@ -13,6 +13,7 @@ def execute(ARGS):
 	booyah = helpers.kv_set(argDict, 'booyah')
 	use = helpers.kv_set(argDict, 'use')
 	here = helpers.kv_set(argDict, 'here')
+	# path = helpers.kv_set(argDict, 'path')
 
 	collectionsPath = ''
 
@@ -133,18 +134,6 @@ def execute(ARGS):
 				)
 				secondConfig = yaml.safe_load(configData)
 
-				# def stitch_config(DATA1, DATA2):
-				# 	import re
-				# 	pattern = r'<% (\w+) %>'
-
-				# 	def replace(match):
-				# 		key = match.group(1)
-				# 		return DATA2.get(key, match.group())
-
-				# 	updated_data1_str = re.sub(pattern, replace, DATA1)
-
-				# 	return updated_data1_str
-
 				formattedConfig = helpers.stitch_config2(secondConfig, formattedPayload)
 				formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig)
 
@@ -204,10 +193,10 @@ def execute(ARGS):
 		,"record": "records/sample.json"
 		}
 	}
-	}
-	'''
+}
+'''
 			tokenContent = '''
-	'''
+'''
 			helpers.run_command('mkdir {ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}'.format(
 				ROASTMAN_COLLECTIONS = collectionsPath,
 				MAIN_FOLDER = nw
@@ -228,11 +217,6 @@ def execute(ARGS):
 				TOKEN_CONTENT = tokenContent
 			))
 
-			# - add new item to roastman list
-			# - create new folder
-			# - create base file (py)
-			# 	- include config file reference for "config" value
-			# - create config file
 		elif booyah:
 			print('''
   _____                 _                         
