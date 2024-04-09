@@ -86,36 +86,38 @@ def execute(ARGS):
 			)
 			roastmanStr = helpers.read_file(settingsFile)
 			roastmanObj = helpers.stitch_roastman_obj(roastmanStr)
-			configFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
-				ROASTMAN_COLLECTIONS = collectionsPath,
-				MAIN_FOLDER = rn,
-				MAIN_FILE = roastmanObj['token']['config']
-			)
-			config = yaml.safe_load(helpers.read_file(configFile))
 
-			if 'show' in roastmanObj['token'] and roastmanObj['token']['show'] == True:
-				rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config, roastmanObj['token']['method'])
+			formattedPayload = {}
 
-				payload = helpers.run_command_output(rnCmd, False)
-				formattedPayload = helpers.format_response(payload)
+			if 'token' in roastmanObj:
+				configFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
+					ROASTMAN_COLLECTIONS = collectionsPath,
+					MAIN_FOLDER = rn,
+					MAIN_FILE = roastmanObj['token']['config']
+				)
+				config = yaml.safe_load(helpers.read_file(configFile))
 
-				msg.curl_result(json.dumps(formattedPayload['body'], indent=4))
+				if 'show' in roastmanObj['token'] and roastmanObj['token']['show'] == True:
+					rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config, roastmanObj['token']['method'])
 
-				if 'record' in roastmanObj['token']:
-					tokenResultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{TOKEN_RECORD}'.format(
-						ROASTMAN_COLLECTIONS = collectionsPath,
-						MAIN_FOLDER = rn,
-						TOKEN_RECORD = roastmanObj['token']['record']
-					)
-					joinedData = helpers.handle_yaml_record(formattedPayload)
-					helpers.write_file(tokenResultFile, joinedData)
-			else:
-				rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config, roastmanObj['token']['method'], False)
+					payload = helpers.run_command_output(rnCmd, False)
+					formattedPayload = helpers.format_response(payload)
 
-				payload = helpers.run_command_output(rnCmd, False)
-				formattedPayload = helpers.format_response(payload)
-			
-			optionList = list(roastmanObj['requests'].keys())
+					msg.curl_result(json.dumps(formattedPayload['body'], indent=4))
+
+					if 'record' in roastmanObj['token']:
+						tokenResultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{TOKEN_RECORD}'.format(
+							ROASTMAN_COLLECTIONS = collectionsPath,
+							MAIN_FOLDER = rn,
+							TOKEN_RECORD = roastmanObj['token']['record']
+						)
+						joinedData = helpers.handle_yaml_record(formattedPayload)
+						helpers.write_file(tokenResultFile, joinedData)
+				else:
+					rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], config, roastmanObj['token']['method'], False)
+
+					payload = helpers.run_command_output(rnCmd, False)
+					formattedPayload = helpers.format_response(payload)
 
 			optionSelectionName = False
 
@@ -123,6 +125,7 @@ def execute(ARGS):
 				optionSelectionName = use
 				optionSelection = False
 			else:
+				optionList = list(roastmanObj['requests'].keys())
 				optionSelection = helpers.user_selection('Select a Request: ', optionList)
 
 			if optionSelection != 'exit' or optionSelectionName:
@@ -134,7 +137,7 @@ def execute(ARGS):
 				)
 				secondConfig = yaml.safe_load(configData)
 
-				formattedConfig = helpers.stitch_config2(secondConfig, formattedPayload)
+				formattedConfig = helpers.stitch_config(secondConfig, formattedPayload)
 				formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig)
 
 				rnSecondCmd = helpers.curl_cmd2(formattedUrl, formattedConfig, roastmanObj['requests'][optionSelectionName]['method'])
@@ -153,7 +156,6 @@ def execute(ARGS):
 					if 'record' in roastmanObj['requests'][optionSelectionName]:
 						joinedData = helpers.handle_yaml_record(data)
 						
-						# formattedData = json.dumps(data, indent=4)
 						resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{RECORD_FOLDER}'.format(
 							ROASTMAN_COLLECTIONS = collectionsPath,
 							MAIN_FOLDER = rn,
