@@ -13,7 +13,7 @@ def execute(ARGS):
 	booyah = helpers.kv_set(argDict, 'booyah')
 	use = helpers.kv_set(argDict, 'use')
 	here = helpers.kv_set(argDict, 'here')
-	# path = helpers.kv_set(argDict, 'path')
+	path = helpers.kv_set(argDict, 'path')
 
 	collectionsPath = ''
 
@@ -85,7 +85,7 @@ def execute(ARGS):
 				MAIN_FILE = rn
 			)
 			roastmanStr = helpers.read_file(settingsFile)
-			roastmanObj = helpers.stitch_roastman_obj(roastmanStr)
+			roastmanObj = helpers.stitch_roastman_obj(roastmanStr, path)
 
 			formattedPayload = {}
 
@@ -138,7 +138,7 @@ def execute(ARGS):
 				secondConfig = yaml.safe_load(configData)
 
 				formattedConfig = helpers.stitch_config(secondConfig, formattedPayload)
-				formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig)
+				formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig, path)
 
 				rnSecondCmd = helpers.curl_cmd2(formattedUrl, formattedConfig, roastmanObj['requests'][optionSelectionName]['method'])
 

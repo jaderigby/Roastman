@@ -128,14 +128,33 @@ def user_selection(DESCRIPTION, LIST, LIST_SELECT = False):
 	return finalAnswer
 
 def arguments(ARGS, DIVIDER=':'):
-	ARGS_FORMATTED = []
+	import re, json
+
+	ARGS_FORMATTED = {}
+	pat = re.compile('[a-zA-Z0-9]*:[\w\,_-{]*:')
 	
 	for item in ARGS:
+
 		if DIVIDER not in item:
-			ARGS_FORMATTED.append('{}:t'.format(item))
+			ARGS_FORMATTED[item] = 't'
+		elif pat.match(item):
+			parsed = item.replace('{','').replace('}','').split(':')
+			itemParentKey = parsed[0]
+			itemKey  = parsed[1]
+			itemValue = parsed[2]
+			if itemParentKey in ARGS_FORMATTED:
+				ARGS_FORMATTED[itemParentKey][itemKey] = itemValue
+			else:
+				newObj = {}
+				newObj[itemKey] = itemValue
+				ARGS_FORMATTED[itemParentKey] = newObj
 		else:
-			ARGS_FORMATTED.append(item)
-	return dict(item.split('{}'.format(DIVIDER)) for item in ARGS_FORMATTED)
+			parsed = item.split(':')
+			itemKey  = parsed[0]
+			itemValue = parsed[1]
+			ARGS_FORMATTED[itemKey] = itemValue
+	
+	return ARGS_FORMATTED
 
 def kv_set(DICT, KEY, DEFAULT = False):
 	if KEY in DICT:
@@ -285,13 +304,16 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 	
 	return curlString
 
-def stitch_roastman_obj(STRING):
+def stitch_roastman_obj(STRING, PATH):
 	import ast
 
 	tempString = STRING
 	tempDict = ast.literal_eval(STRING)
 
 	if "variables" in tempDict.keys():
+		if PATH:
+			for k, v in PATH.items():
+				tempDict['variables'][k] = v
 		for key, val in tempDict['variables'].items():
 			varPlaceholder = '{' + key + '}'
 			tempString = tempString.replace(
@@ -349,9 +371,48 @@ def stitch_config(DATA1, DATA2):
 
 	return DATA1
 
-def stitch_url(URL, DATA):
+def stitch_url(URL, DATA, CMD_LINE_PATH):
 	formattedUrl = ''
-	if DATA and 'path' in DATA:
+
+	#= variables passed through 'path'; has data AND has 'path' definition in DATA
+	if CMD_LINE_PATH and DATA and 'path' in DATA:
+		for k, v in CMD_LINE_PATH.items():
+			DATA['path'][k] = v
+		
+		if '{'in URL:
+			URL.split("{")[1].split("}")[0]
+			formattedUrl = URL.format(**DATA['path'])
+		else:
+			formattedUrl = URL
+	
+	#= variables passed through 'path'; has data, but no 'path' definition
+	elif CMD_LINE_PATH and DATA:
+		DATA['path'] = {}
+		for k, v in CMD_LINE_PATH.items():
+			DATA['path'][k] = v
+		
+		if '{'in URL:
+			URL.split("{")[1].split("}")[0]
+			formattedUrl = URL.format(**DATA['path'])
+		else:
+			formattedUrl = URL
+	
+	#= variables passed through 'path'; no data, otherwise
+	elif CMD_LINE_PATH:
+		DATA = {}
+		DATA['path'] = {}
+
+		for k, v in CMD_LINE_PATH.items():
+			DATA['path'][k] = v
+		
+		if '{'in URL:
+			URL.split("{")[1].split("}")[0]
+			formattedUrl = URL.format(**DATA['path'])
+		else:
+			formattedUrl = URL
+	
+	#= no path variables passed; has data, has data AND has 'path' definition in DATA
+	elif DATA and 'path' in DATA:
 		if '{'in URL:
 			URL.split("{")[1].split("}")[0]
 			formattedUrl = URL.format(**DATA['path'])
@@ -359,6 +420,7 @@ def stitch_url(URL, DATA):
 			formattedUrl = URL
 	else:
 		formattedUrl = URL
+
 	return formattedUrl
 
 def format_response(RESPONSE):
