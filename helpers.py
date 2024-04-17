@@ -128,7 +128,7 @@ def user_selection(DESCRIPTION, LIST, LIST_SELECT = False):
 	return finalAnswer
 
 def arguments(ARGS, DIVIDER=':'):
-	import re, json
+	import re
 
 	ARGS_FORMATTED = {}
 	pat = re.compile('[a-zA-Z0-9]*:[\w\,_-{]*:')
@@ -486,3 +486,11 @@ body: |
 '''.format(formattedData, json.dumps(DATA['body'], indent=4))
 	
 	return joinedData
+
+def handle_file_out(DATA):
+	import json
+
+	formattedData = '''{}
+'''.format(json.dumps(DATA['body'], indent=4))
+	
+	return formattedData

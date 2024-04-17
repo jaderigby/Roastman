@@ -1,5 +1,5 @@
 import messages as msg
-import helpers, ast, json, yaml, os
+import helpers, ast, json, yaml, re
 
 settings = helpers.get_settings()
 
@@ -120,10 +120,16 @@ def execute(ARGS):
 					formattedPayload = helpers.format_response(payload)
 
 			optionSelectionName = False
+			optionSelection = False
 
 			if use:
-				optionSelectionName = use
-				optionSelection = False
+				try:
+					useFormatted = int(use)
+					optionList = list(roastmanObj['requests'].keys())
+					optionSelectionName = optionList[useFormatted - 1]
+					msg.request_selection(optionSelectionName)
+				except:
+					optionSelectionName = use
 			else:
 				optionList = list(roastmanObj['requests'].keys())
 				optionSelection = helpers.user_selection('Select a Request: ', optionList)
@@ -165,6 +171,26 @@ def execute(ARGS):
 						helpers.run_command('open -a "{}" {}'.format(settings['roastmanRecordApp'], resultFile), False)
 					else:
 						msg.curl_result(json.dumps(formattedResult['body'], indent=4))
+
+					if 'out' in roastmanObj['requests'][optionSelectionName]:
+						joinedData = helpers.handle_file_out(data)
+
+						ifRootPat = re.compile('^/.*$')
+						outFile = roastmanObj['requests'][optionSelectionName]['out']
+
+						resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{OUT_FOLDER}'.format(
+								ROASTMAN_COLLECTIONS = collectionsPath,
+								MAIN_FOLDER = rn,
+								OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
+							)
+
+						if ifRootPat.match(outFile):
+							resultFile = '{HERE_FOLDER}/{OUT_FOLDER}'.format(
+								HERE_FOLDER = collectionsPath.replace('/roastman_collections', ''),
+								OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
+							)
+
+						helpers.write_file(resultFile, joinedData)
 		
 		elif config:
 			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
