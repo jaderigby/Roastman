@@ -33,13 +33,17 @@ def execute(ARGS):
 			settings['roastman']
 		)
 
+	options = helpers.list_files(collectionsPath)
+	
 	if select == 't':
-		options = helpers.list_files(collectionsPath)
 		selection = helpers.user_selection("Select: ", options)
 		if selection != 'exit':
 			rn = options[selection - 1]
 	elif select:
-		rn = select
+		if select.isnumeric():
+			rn = options[int(select) - 1]
+		else:
+			rn = select
 
 	if add:	
 		newRequest = {}
@@ -123,12 +127,12 @@ def execute(ARGS):
 			optionSelection = False
 
 			if use:
-				try:
+				if use.isnumeric():
 					useFormatted = int(use)
 					optionList = list(roastmanObj['requests'].keys())
 					optionSelectionName = optionList[useFormatted - 1]
 					msg.request_selection(optionSelectionName)
-				except:
+				else:
 					optionSelectionName = use
 			else:
 				optionList = list(roastmanObj['requests'].keys())

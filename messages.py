@@ -61,3 +61,6 @@ def running_from(ITEM):
 		helpers.decorate('bold', 'Running Roastman Collections from'),
 		helpers.decorate('yellow', ITEM)
 	))
+
+def request_selection(ITEM):
+	print('\nRunning request: {}\n'.format(helpers.decorate('green', ITEM)))
