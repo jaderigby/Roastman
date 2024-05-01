@@ -233,7 +233,10 @@ def resolve_marked_val(VAL):
 	return formattedVal
 
 def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
+	import re
+
 	curlList = []
+	base64Addendum = False
 
 	methodDef = ''
 
@@ -264,9 +267,15 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 			bodyList.append(bodyPrefix)
 			total_items = len(CONFIGS['body'])
 
-			for index, (key, val) in enumerate(CONFIGS['body'].items()):
+			base64Pat = re.compile('base64\("(.*)"\)')
 
-				if type(val) == str:
+			for index, (key, val) in enumerate(CONFIGS['body'].items()):
+				if type(val) == str and base64Pat.match(val):
+					base64Val = base64Pat.match(val).group(1)
+					base64Addendum = '{ID}_CONTENT="{VAL}"\n\n{ID}_ENCODED=$(echo -n "${ID}_CONTENT" | base64)\n\n'.format(ID = key, VAL = base64Val)
+					val = '''"'"${ID}_ENCODED"'"'''.format(ID = key)
+
+				elif type(val) == str:
 					val = '"{}"'.format(val)
 
 				markedVal = marked_val(val)
@@ -278,6 +287,9 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 					bodyList.append('''\n\t"{}": {},'''.format(key, formattedVal))
 			bodyList.append(bodySuffix)
 		
+	if base64Addendum:
+		curlList.append(base64Addendum)
+	
 	curlList.append(curlPrefix)
 	curlList.append(headerList)
 	curlList.append(bodyList)
@@ -368,7 +380,7 @@ def stitch_config(DATA1, DATA2):
 					DATA1['headers'][key] = settings[placeholder_key]
 				else:
 					DATA1['headers'][key] = DATA2['body'][placeholder_key]
-
+	
 	return DATA1
 
 def stitch_url(URL, DATA, CMD_LINE_PATH):
@@ -426,17 +438,21 @@ def stitch_url(URL, DATA, CMD_LINE_PATH):
 def format_response(RESPONSE):
 	import re
 
+	parsedResponse = RESPONSE.split('\r\n\r\n', 1)
+	
+	RESPONSE_CLEANED = parsedResponse[0]
+
 	newObj = {}
 	responseCodePat = ' [0-9]*'
 
-	responseContent = [line.strip('\r') for line in RESPONSE.split('\n') if line.strip('\r')]
+	responseContent = [line.strip('\r') for line in RESPONSE_CLEANED.split('\n') if line.strip('\r')]
 	firstLine = responseContent[0]
 	responseCode = int(re.findall(responseCodePat, firstLine)[0].strip(' '))
 	
 	#= with response code captured above, remove response code line and continue with rest of data
 	responseContent.pop(0)
 
-	bodyContent = responseContent[len(responseContent) - 1]
+	bodyContent = parsedResponse[1]
 
 	#= with body captured as last line in response, remove last line
 	responseContent.pop(len(responseContent) - 1)

@@ -1,5 +1,5 @@
 import messages as msg
-import helpers, ast, json, yaml, re
+import helpers, ast, json, yaml, re, base64
 
 settings = helpers.get_settings()
 
@@ -131,9 +131,20 @@ def execute(ARGS):
 					useFormatted = int(use)
 					optionList = list(roastmanObj['requests'].keys())
 					optionSelectionName = optionList[useFormatted - 1]
+
+					#= normalize 'use' as a list
+					use = []
+					use.append(optionSelectionName)
 					msg.request_selection(optionSelectionName)
+				# elif use has pattern:
+				# 	#= normalize 'use' as a list
+				# 	use.append(optionSelectionName)
 				else:
 					optionSelectionName = use
+
+					#= normalize 'use' as a list
+					use = []
+					use.append(optionSelectionName)
 			else:
 				optionList = list(roastmanObj['requests'].keys())
 				optionSelection = helpers.user_selection('Select a Request: ', optionList)
