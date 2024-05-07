@@ -229,6 +229,8 @@ def resolve_marked_val(VAL):
 		match = re.search(pat, VAL)
 		if match:
 			formattedVal = match.group().strip('___markedVal\(').strip('\)')
+	else:
+		formattedVal = json.dumps(VAL)
 	
 	return formattedVal
 
@@ -272,7 +274,7 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 			for index, (key, val) in enumerate(CONFIGS['body'].items()):
 				if type(val) == str and base64Pat.match(val):
 					base64Val = base64Pat.match(val).group(1)
-					base64Addendum = '{ID}_CONTENT="{VAL}"\n\n{ID}_ENCODED=$(echo -n "${ID}_CONTENT" | base64)\n\n'.format(ID = key, VAL = base64Val)
+					base64Addendum = '{ID}_CONTENT="{VAL}"\n\n{ID}_ENCODED=$(echo "${ID}_CONTENT" | base64)\n\n'.format(ID = key, VAL = base64Val)
 					val = '''"'"${ID}_ENCODED"'"'''.format(ID = key)
 
 				elif type(val) == str:
