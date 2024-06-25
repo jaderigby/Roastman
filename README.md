@@ -13,7 +13,7 @@ An api tester/manager similar to Postman.
 The easiest way to setup Roastman is to first install [bacon](https://github.com/jaderigby/bacon).  Once bacon is installed, then run the following command:
 
 ```
-cd ~/Documents/bacon-bits && git clone https://github.com/jaderigby/Roastman.git && bacon set
+cd ~/Documents/bacon-bits && git clone https://github.com/jaderigby/Roastman.git && bacon alias && bacon set
 ```
 
 To verify that the setup was successful, run `roastman`. You should see the commands available to you in Roastman, as a result.
