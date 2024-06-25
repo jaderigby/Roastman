@@ -8,6 +8,18 @@ Licensed under MIT
 
 An api tester/manager similar to Postman.
 
+## Installation ##
+
+The easiest way to install is to first install [bacon](https://github.com/jaderigby/bacon).  Once bacon is installed, then run the following command:
+
+```
+cd ~/Documents/bacon-bits && git clone https://github.com/jaderigby/Roastman.git && bacon set
+```
+
+To verify that the install was successful, run `roastman`. You should see the commands available in Roastman.
+
+__You are all set!__
+
 ## Options ##
 
 `roastman - select`: Lists the available collections (must create at least 1 collection, first)
