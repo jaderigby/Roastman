@@ -4,7 +4,7 @@
     "actions": [
         {
             "name": "-",
-            "description": "Run = accepts the following parameters:\n\nselect:\t\tPull up the collections list for selection\nadd:\t\tAdd a new request\nnew:\t\tAdd a new collection\nuse:\t\tPass in name of request, to run request without requiring selection"
+            "description": "Run = accepts the following parameters:\n\nselect:\t\tPull up the collections list for selection\nadd:\t\tAdd a new request\nnew:\t\tAdd a new collection\nuse:\t\tPass in name of request, to run request without requiring selection\nhere:\t\tRun the roastman collections found in the current working directory, instead of the default"
         }
     ]
 }
