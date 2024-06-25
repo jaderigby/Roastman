@@ -12,11 +12,13 @@ An api tester/manager similar to Postman.
 
 `roastman - select`: Lists the available collections (must create at least 1 collection, first)
 
-`roastman - select:exampleCollection`: Demonstrates using `select` to pass the value, rather than selecting from a numeric list.
+`roastman - select:exampleCollection`: Demonstrates using `select` to pass the value, rather than selecting from a numeric list. __Note:__ You can also just pass the numric value, as well, such as `roastman - select:2`
 
 `roastman - select:exampleCollection add:someRequest`: Add a new request.
 
-`roastman - select:exampleCollection use:someRequest`: Demonstrates using `use` to pass a value, rather than selecting the request from a numeric list.
+`roastman - select:exampleCollection use:someRequest`: Demonstrates using `use` to pass a value, rather than selecting the request from a numeric list. __Note:__ You can also just pass the numric value, as well, such as `roastman - select:2 use:3`
+
+`roastman - here`: By default, your roastman collections are located at `Roastman > profiles > roastman_collections`.  But if you want to include a specific set of collections in, say, your personal repo, you can!  First, create a folder called "roastman_collections" at the root of the repo.  Then, cd to that directory and add "here" to the command, such as `roastman - here select`.  You can add a new collection, run requests, etc, like you would normally.  The only difference is that the `here` command will run it from your current working directory.
 
 ## Settings File Features ##
 
