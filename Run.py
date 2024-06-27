@@ -82,7 +82,47 @@ def execute(ARGS):
 
 	else:
 
-		if rn:
+		if config:
+
+			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
+				ROASTMAN_COLLECTIONS = collectionsPath, 
+				MAIN_FOLDER = rn,
+				MAIN_FILE = rn
+			)
+
+			roastmanStr = helpers.read_file(settingsFile)
+			roastmanObj = helpers.stitch_roastman_obj(roastmanStr, path)
+
+			if use:
+				if use.isnumeric():
+					useFormatted = int(use)
+					optionList = list(roastmanObj['requests'].keys())
+					optionSelectionName = optionList[useFormatted - 1]
+				else:
+					optionSelectionName = use
+				
+				requestConfigFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{REQUEST}_config.yaml'.format(
+					ROASTMAN_COLLECTIONS = collectionsPath,
+					MAIN_FOLDER = rn,
+					REQUEST = optionSelectionName
+				)
+
+				helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {SETTINGS_FILE}'.format(
+					ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
+					SETTINGS_FILE = requestConfigFile
+				))
+
+			else:
+				tokenConfigFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
+					ROASTMAN_COLLECTIONS = collectionsPath,
+					MAIN_FOLDER = rn
+				)
+				helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {SETTINGS_FILE}'.format(
+					ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
+					SETTINGS_FILE = tokenConfigFile
+				))
+
+		elif rn:
 			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
 				ROASTMAN_COLLECTIONS = collectionsPath, 
 				MAIN_FOLDER = rn,
@@ -206,18 +246,6 @@ def execute(ARGS):
 							)
 
 						helpers.write_file(resultFile, joinedData)
-		
-		elif config:
-			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
-				ROASTMAN_COLLECTIONS = collectionsPath,
-				MAIN_FOLDER = config
-			)
-			roastmanStr = helpers.read_file(settingsFile)
-			helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
-				ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
-				ROASTMAN_COLLECTIONS = collectionsPath,
-				MAIN_FOLDER = config
-			))
 
 		elif nw:
 			collectionContent = '''{
