@@ -236,6 +236,9 @@ def resolve_marked_val(VAL):
 
 def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 	import re
+	import getpass
+
+	settings = get_settings()
 
 	curlList = []
 	base64Addendum = False
@@ -246,6 +249,8 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 		methodDef = '--request POST '
 	elif METHOD == 'put':
 		methodDef = '--request PUT '
+	elif METHOD == 'delete':
+		methodDef = '--request DELETE '
 
 	curlPrefix = """curl -s --location {}'{}' \\""".format(methodDef, URL)
 	curlSuffix = "\n-D -"
@@ -272,6 +277,27 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 			base64Pat = re.compile('base64\("(.*)"\)')
 
 			for index, (key, val) in enumerate(CONFIGS['body'].items()):
+				pat = '<% .* %>'
+
+				if isinstance(val, str):
+					match = re.search(pat, val)
+				
+					if match:
+						placeholder_key = match.group().strip('<% | %>')
+
+						if ':' in placeholder_key:
+							parts = placeholder_key.split(':')
+							if parts[0] == 'variables':
+								val = [parts[0]]
+							elif parts[0] == 'profile':
+								val = settings[parts[1]]
+							elif parts[0] == 'prompt':
+								v = user_input(parts[1].replace('"', '').replace("'", "") + ": ")
+								val = v
+							elif parts[0] == 'password':
+								v = getpass.getpass(parts[1].replace('"', '').replace("'", "") + ": ")
+								val = v
+
 				if type(val) == str and base64Pat.match(val):
 					base64Val = base64Pat.match(val).group(1)
 					base64Addendum = '{ID}_CONTENT="{VAL}"\n\n{ID}_ENCODED=$(echo "${ID}_CONTENT" | base64)\n\n'.format(ID = key, VAL = base64Val)
@@ -360,26 +386,34 @@ def stitch_config(DATA1, DATA2):
 					parts = placeholder_key.split(':')
 					ref = ''
 					TEMP = DATA2
-					for index, elem in enumerate(parts):
-						if type(TEMP) is dict and index < (len(parts) - 1):
-							ref = TEMP[elem]
-							TEMP = ref
-						elif type(TEMP) is dict:
-							ref = TEMP[elem]
-							returnVal = ref
-						else:
-							cookieObj = TEMP.split('; ')[0]
-							newObj = {}
-							cookieVal = cookieObj.split('=')
-							newObj[cookieVal[0]] = cookieVal[1]
-							if elem in newObj:
-								returnVal = value.replace(match.group(), newObj[elem])
-					
+					# print('=========================')
+					# print(parts[0])
+					if parts[0] == 'variables':
+						returnVal = [parts[0]]
+					elif parts[0] == 'profile':
+						returnVal = settings[parts[1]]
+					elif parts[0] == 'prompt':
+						val = user_input(parts[1].replace('"', '').replace("'", "") + ": ")
+						returnVal = val
+					else:
+						for index, elem in enumerate(parts):
+							if type(TEMP) is dict and index < (len(parts) - 1):
+								ref = TEMP[elem]
+								TEMP = ref
+							elif type(TEMP) is dict:
+								ref = TEMP[elem]
+								returnVal = ref
+							else:
+								cookieObj = TEMP.split('; ')[0]
+								newObj = {}
+								cookieVal = cookieObj.split('=')
+								newObj[cookieVal[0]] = cookieVal[1]
+								if elem in newObj:
+									returnVal = value.replace(match.group(), newObj[elem])
+						
 					if returnVal:
 						DATA1['headers'][key] = returnVal
 
-				elif placeholder_key in settings:
-					DATA1['headers'][key] = settings[placeholder_key]
 				else:
 					DATA1['headers'][key] = DATA2['body'][placeholder_key]
 	
