@@ -374,52 +374,55 @@ def stitch_config(DATA1, DATA2):
 	if DATA1:
 		pat = '<% .* %>'
 		
-		for key, value in DATA1['headers'].items():
-			match = re.search(pat, value)
-			
-			if match:
-				placeholder_key = match.group().strip('<% | %>')
+		if 'headers' in DATA1:
+			for key, value in DATA1['headers'].items():
+				match = re.search(pat, value)
+				
+				if match:
+					placeholder_key = match.group().strip('<% | %>')
 
-				returnVal = False
+					returnVal = False
 
-				if ':' in placeholder_key:
-					parts = placeholder_key.split(':')
-					ref = ''
-					TEMP = DATA2
-					# print('=========================')
-					# print(parts[0])
-					if parts[0] == 'variables':
-						returnVal = [parts[0]]
-					elif parts[0] == 'profile':
-						returnVal = settings[parts[1]]
-					elif parts[0] == 'prompt':
-						val = user_input(parts[1].replace('"', '').replace("'", "") + ": ")
-						returnVal = val
+					if ':' in placeholder_key:
+						parts = placeholder_key.split(':')
+						ref = ''
+						TEMP = DATA2
+						# print('=========================')
+						# print(parts[0])
+						if parts[0] == 'variables':
+							returnVal = [parts[0]]
+						elif parts[0] == 'profile':
+							returnVal = settings[parts[1]]
+						elif parts[0] == 'prompt':
+							val = user_input(parts[1].replace('"', '').replace("'", "") + ": ")
+							returnVal = val
+						else:
+							for index, elem in enumerate(parts):
+								if type(TEMP) is dict and index < (len(parts) - 1):
+									ref = TEMP[elem]
+									TEMP = ref
+								elif type(TEMP) is dict:
+									ref = TEMP[elem]
+									returnVal = ref
+								else:
+									cookieObj = TEMP.split('; ')[0]
+									newObj = {}
+									cookieVal = cookieObj.split('=')
+									newObj[cookieVal[0]] = cookieVal[1]
+									if elem in newObj:
+										returnVal = value.replace(match.group(), newObj[elem])
+							
+						if returnVal:
+							DATA1['headers'][key] = returnVal
+
 					else:
-						for index, elem in enumerate(parts):
-							if type(TEMP) is dict and index < (len(parts) - 1):
-								ref = TEMP[elem]
-								TEMP = ref
-							elif type(TEMP) is dict:
-								ref = TEMP[elem]
-								returnVal = ref
-							else:
-								cookieObj = TEMP.split('; ')[0]
-								newObj = {}
-								cookieVal = cookieObj.split('=')
-								newObj[cookieVal[0]] = cookieVal[1]
-								if elem in newObj:
-									returnVal = value.replace(match.group(), newObj[elem])
-						
-					if returnVal:
-						DATA1['headers'][key] = returnVal
-
-				else:
-					DATA1['headers'][key] = DATA2['body'][placeholder_key]
+						DATA1['headers'][key] = DATA2['body'][placeholder_key]
 	
 	return DATA1
 
 def stitch_url(URL, DATA, CMD_LINE_PATH):
+	import re
+
 	formattedUrl = ''
 
 	#= variables passed through 'path'; has data AND has 'path' definition in DATA
@@ -463,6 +466,26 @@ def stitch_url(URL, DATA, CMD_LINE_PATH):
 	elif DATA and 'path' in DATA:
 		if '{'in URL:
 			URL.split("{")[1].split("}")[0]
+		
+			for k, v in DATA['path'].items():
+
+				pat = '<% .* %>'
+			
+				if isinstance(v, str):
+					match = re.search(pat, v)
+						
+					if match:
+						v = match.group().strip('<% | %>')
+						parts = v.replace('<% | %>|<%|%>', '').split(':')
+						
+						if parts[0] == 'profile':
+							v = settings[parts[1]]
+						elif 'prompt':
+							print('\n')
+							v = user_input(parts[1].replace('"', '').replace("'", "") + ": ")
+
+				DATA['path'][k] = v
+			
 			formattedUrl = URL.format(**DATA['path'])
 		else:
 			formattedUrl = URL
