@@ -234,7 +234,7 @@ def resolve_marked_val(VAL):
 	
 	return formattedVal
 
-def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
+def curl_cmd2(URL, VARS = {}, CONFIGS = {}, METHOD="get", option = True):
 	import re
 	import getpass
 
@@ -288,7 +288,7 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 						if ':' in placeholder_key:
 							parts = placeholder_key.split(':')
 							if parts[0] == 'variables':
-								val = [parts[0]]
+								val = VARS[parts[1]]
 							elif parts[0] == 'profile':
 								val = settings[parts[1]]
 							elif parts[0] == 'prompt':
@@ -297,6 +297,8 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 							elif parts[0] == 'password':
 								v = getpass.getpass(parts[1].replace('"', '').replace("'", "") + ": ")
 								val = v
+						# elif '.' in placeholder_key:
+						# 	val = placeholder_key.split('.')
 
 				if type(val) == str and base64Pat.match(val):
 					base64Val = base64Pat.match(val).group(1)
@@ -344,11 +346,19 @@ def curl_cmd2(URL, CONFIGS = {}, METHOD="get", option = True):
 	
 	return curlString
 
-def stitch_roastman_obj(STRING, PATH):
-	import ast
+def stitch_roastman_obj(STRING, VARIABLES, PATH):
+	import ast, json
 
-	tempString = STRING
 	tempDict = ast.literal_eval(STRING)
+
+	if VARIABLES:
+		if not 'variables' in tempDict.keys():
+			tempDict['variables'] = {}
+		
+		for initial_k, initial_v in VARIABLES.items():
+			tempDict['variables'][initial_k] = initial_v
+	
+	tempString = json.dumps(tempDict)
 
 	if "variables" in tempDict.keys():
 		if PATH:
@@ -360,7 +370,7 @@ def stitch_roastman_obj(STRING, PATH):
 				varPlaceholder,
 				val
 			)
-
+	
 	formattedObj = ast.literal_eval(tempString)
 
 	return formattedObj
@@ -414,9 +424,19 @@ def stitch_config(DATA1, DATA2):
 							
 						if returnVal:
 							DATA1['headers'][key] = returnVal
-
+					elif '.' in placeholder_key:
+						placeholder_key = placeholder_key.split('.')
 					else:
-						DATA1['headers'][key] = DATA2['body'][placeholder_key]
+						if type(placeholder_key) == list:
+							traceVal = None
+							for item, index in placeholder_key:
+								if index == 0:
+									traceVal = DATA2['body'][item]
+								else:
+									traceVal = [traceVal][item]
+							DATA1['headers'][key] = DATA2['body'][traceVal]
+						else:
+							DATA1['headers'][key] = DATA2['body'][placeholder_key]
 	
 	return DATA1
 

@@ -8,12 +8,18 @@ def execute(ARGS):
 	select = helpers.kv_set(argDict, 'select')
 	rn = helpers.kv_set(argDict, 'run')
 	config = helpers.kv_set(argDict, 'config')
+	stngs = helpers.kv_set(argDict, 'settings')
 	nw = helpers.kv_set(argDict, 'new')
 	add = helpers.kv_set(argDict, 'add')
 	booyah = helpers.kv_set(argDict, 'booyah')
 	use = helpers.kv_set(argDict, 'use')
 	here = helpers.kv_set(argDict, 'here')
 	path = helpers.kv_set(argDict, 'path')
+	variables = helpers.kv_set(argDict, 'variables')
+	session = helpers.kv_set(argDict, 'session')
+
+	if not select:
+		select = 't'
 
 	collectionsPath = ''
 
@@ -82,16 +88,16 @@ def execute(ARGS):
 
 	else:
 
-		if config:
+		if config or stngs:
 
-			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
+			configFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
 				ROASTMAN_COLLECTIONS = collectionsPath, 
 				MAIN_FOLDER = rn,
 				MAIN_FILE = rn
 			)
 
-			roastmanStr = helpers.read_file(settingsFile)
-			roastmanObj = helpers.stitch_roastman_obj(roastmanStr, path)
+			roastmanStr = helpers.read_file(configFile)
+			roastmanObj = helpers.stitch_roastman_obj(roastmanStr, variables, path)
 
 			if use:
 				if use.isnumeric():
@@ -113,14 +119,25 @@ def execute(ARGS):
 				))
 
 			else:
-				tokenConfigFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
-					ROASTMAN_COLLECTIONS = collectionsPath,
-					MAIN_FOLDER = rn
-				)
-				helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {SETTINGS_FILE}'.format(
-					ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
-					SETTINGS_FILE = tokenConfigFile
-				))
+				if config:
+					tokenConfigFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/token_config.yaml'.format(
+						ROASTMAN_COLLECTIONS = collectionsPath,
+						MAIN_FOLDER = rn
+					)
+					helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {SETTINGS_FILE}'.format(
+						ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
+						SETTINGS_FILE = tokenConfigFile
+					))
+				elif stngs:
+					settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
+						ROASTMAN_COLLECTIONS = collectionsPath, 
+						MAIN_FOLDER = rn,
+						MAIN_FILE = rn
+					)
+					helpers.run_command('open -a "{ROASTMAN_CONFIG_EDITOR}" {SETTINGS_FILE}'.format(
+						ROASTMAN_CONFIG_EDITOR = settings['roastmanConfigEditor'],
+						SETTINGS_FILE = settingsFile
+					))
 
 		elif rn:
 			settingsFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}.py'.format(
@@ -129,7 +146,7 @@ def execute(ARGS):
 				MAIN_FILE = rn
 			)
 			roastmanStr = helpers.read_file(settingsFile)
-			roastmanObj = helpers.stitch_roastman_obj(roastmanStr, path)
+			roastmanObj = helpers.stitch_roastman_obj(roastmanStr, variables, path)
 
 			formattedPayload = {}
 
@@ -143,8 +160,8 @@ def execute(ARGS):
 
 				formattedTokenConfig = helpers.stitch_config(config, '')
 
-				if 'show' in roastmanObj['token'] and roastmanObj['token']['show'] == True:
-					rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], formattedTokenConfig, roastmanObj['token']['method'])
+				if 'show' in roastmanObj['token'] and roastmanObj['token']['show'] == "true":
+					rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], roastmanObj['variables'], formattedTokenConfig, roastmanObj['token']['method'])
 
 					payload = helpers.run_command_output(rnCmd, False)
 					formattedPayload = helpers.format_response(payload)
@@ -160,7 +177,7 @@ def execute(ARGS):
 						joinedData = helpers.handle_yaml_record(formattedPayload)
 						helpers.write_file(tokenResultFile, joinedData)
 				else:
-					rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], formattedTokenConfig, roastmanObj['token']['method'], False)
+					rnCmd = helpers.curl_cmd2(roastmanObj['token']['url'], roastmanObj['variables'], formattedTokenConfig, roastmanObj['token']['method'], False)
 
 					payload = helpers.run_command_output(rnCmd, False)
 					formattedPayload = helpers.format_response(payload)
@@ -188,66 +205,133 @@ def execute(ARGS):
 					use = []
 					use.append(optionSelectionName)
 			else:
-				optionList = list(roastmanObj['requests'].keys())
-				optionSelection = helpers.user_selection('Select a Request: ', optionList)
+				if session:
+					while True:
+						optionList = list(roastmanObj['requests'].keys())
+						optionSelection = helpers.user_selection('Select a Request: ', optionList)
 
-			if optionSelection != 'exit' or optionSelectionName:
-				optionSelectionName = optionSelectionName if optionSelectionName else optionList[optionSelection - 1]
-				configData = helpers.read_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
-					ROASTMAN_COLLECTIONS = collectionsPath,
-					MAIN_FOLDER = rn,
-					MAIN_FILE = roastmanObj['requests'][optionSelectionName]['config'])
-				)
-				secondConfig = yaml.safe_load(configData)
-
-				formattedConfig = helpers.stitch_config(secondConfig, formattedPayload)
-				formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig, path)
-
-				rnSecondCmd = helpers.curl_cmd2(formattedUrl, formattedConfig, roastmanObj['requests'][optionSelectionName]['method'])
-
-				valid = True
-				result = helpers.run_command_output(rnSecondCmd, False)
-				formattedResult = helpers.format_response(result)
-				#= TODO: Status:Brittle = Needs a better check than just "valid json structure"
-				try:
-					data = formattedResult
-				except:
-					valid = False
-					msg.response_error(json.dumps(formattedResult['body'], indent=4))
-				
-				if valid:
-					if 'record' in roastmanObj['requests'][optionSelectionName]:
-						joinedData = helpers.handle_yaml_record(data)
-						
-						resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{RECORD_FOLDER}'.format(
-							ROASTMAN_COLLECTIONS = collectionsPath,
-							MAIN_FOLDER = rn,
-							RECORD_FOLDER = roastmanObj['requests'][optionSelectionName]['record']
-						)
-						helpers.write_file(resultFile, joinedData)
-						helpers.run_command('open -a "{}" {}'.format(settings['roastmanRecordApp'], resultFile), False)
-					else:
-						msg.curl_result(json.dumps(formattedResult['body'], indent=4))
-
-					if 'out' in roastmanObj['requests'][optionSelectionName]:
-						joinedData = helpers.handle_file_out(data)
-
-						ifRootPat = re.compile('^/.*$')
-						outFile = roastmanObj['requests'][optionSelectionName]['out']
-
-						resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{OUT_FOLDER}'.format(
+						if optionSelection != 'exit':
+							optionSelectionName = optionList[optionSelection - 1]
+							configData = helpers.read_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
 								ROASTMAN_COLLECTIONS = collectionsPath,
 								MAIN_FOLDER = rn,
-								OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
+								MAIN_FILE = roastmanObj['requests'][optionSelectionName]['config'])
 							)
+							secondConfig = yaml.safe_load(configData)
 
-						if ifRootPat.match(outFile):
-							resultFile = '{HERE_FOLDER}/{OUT_FOLDER}'.format(
-								HERE_FOLDER = collectionsPath.replace('/roastman_collections', ''),
-								OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
-							)
+							formattedConfig = helpers.stitch_config(secondConfig, formattedPayload)
+							formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig, path)
 
-						helpers.write_file(resultFile, joinedData)
+							rnSecondCmd = helpers.curl_cmd2(formattedUrl, roastmanObj['variables'], formattedConfig, roastmanObj['requests'][optionSelectionName]['method'])
+
+							valid = True
+							result = helpers.run_command_output(rnSecondCmd, False)
+							formattedResult = helpers.format_response(result)
+							#= TODO: Status:Brittle = Needs a better check than just "valid json structure"
+							try:
+								data = formattedResult
+							except:
+								valid = False
+								msg.response_error(json.dumps(formattedResult['body'], indent=4))
+							
+							if valid:
+								if 'record' in roastmanObj['requests'][optionSelectionName]:
+									joinedData = helpers.handle_yaml_record(data)
+									
+									resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{RECORD_FOLDER}'.format(
+										ROASTMAN_COLLECTIONS = collectionsPath,
+										MAIN_FOLDER = rn,
+										RECORD_FOLDER = roastmanObj['requests'][optionSelectionName]['record']
+									)
+									helpers.write_file(resultFile, joinedData)
+									helpers.run_command('open -a "{}" {}'.format(settings['roastmanRecordApp'], resultFile), False)
+								else:
+									msg.curl_result(json.dumps(formattedResult['body'], indent=4))
+
+								if 'out' in roastmanObj['requests'][optionSelectionName]:
+									joinedData = helpers.handle_file_out(data)
+
+									ifRootPat = re.compile('^/.*$')
+									outFile = roastmanObj['requests'][optionSelectionName]['out']
+
+									resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{OUT_FOLDER}'.format(
+											ROASTMAN_COLLECTIONS = collectionsPath,
+											MAIN_FOLDER = rn,
+											OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
+										)
+
+									if ifRootPat.match(outFile):
+										resultFile = '{HERE_FOLDER}/{OUT_FOLDER}'.format(
+											HERE_FOLDER = collectionsPath.replace('/roastman_collections', ''),
+											OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
+										)
+
+									helpers.write_file(resultFile, joinedData)
+
+						elif optionSelection == 'exit':
+							break
+
+				else:	
+					optionList = list(roastmanObj['requests'].keys())
+					optionSelection = helpers.user_selection('Select a Request: ', optionList)
+
+					if optionSelection != 'exit' or optionSelectionName:
+						optionSelectionName = optionSelectionName if optionSelectionName else optionList[optionSelection - 1]
+						configData = helpers.read_file('{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{MAIN_FILE}'.format(
+							ROASTMAN_COLLECTIONS = collectionsPath,
+							MAIN_FOLDER = rn,
+							MAIN_FILE = roastmanObj['requests'][optionSelectionName]['config'])
+						)
+						secondConfig = yaml.safe_load(configData)
+
+						formattedConfig = helpers.stitch_config(secondConfig, formattedPayload)
+						formattedUrl = helpers.stitch_url(roastmanObj['requests'][optionSelectionName]['url'], secondConfig, path)
+
+						rnSecondCmd = helpers.curl_cmd2(formattedUrl, roastmanObj['variables'], formattedConfig, roastmanObj['requests'][optionSelectionName]['method'])
+
+						valid = True
+						result = helpers.run_command_output(rnSecondCmd, False)
+						formattedResult = helpers.format_response(result)
+						#= TODO: Status:Brittle = Needs a better check than just "valid json structure"
+						try:
+							data = formattedResult
+						except:
+							valid = False
+							msg.response_error(json.dumps(formattedResult['body'], indent=4))
+						
+						if valid:
+							if 'record' in roastmanObj['requests'][optionSelectionName]:
+								joinedData = helpers.handle_yaml_record(data)
+								
+								resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{RECORD_FOLDER}'.format(
+									ROASTMAN_COLLECTIONS = collectionsPath,
+									MAIN_FOLDER = rn,
+									RECORD_FOLDER = roastmanObj['requests'][optionSelectionName]['record']
+								)
+								helpers.write_file(resultFile, joinedData)
+								helpers.run_command('open -a "{}" {}'.format(settings['roastmanRecordApp'], resultFile), False)
+							else:
+								msg.curl_result(json.dumps(formattedResult['body'], indent=4))
+
+							if 'out' in roastmanObj['requests'][optionSelectionName]:
+								joinedData = helpers.handle_file_out(data)
+
+								ifRootPat = re.compile('^/.*$')
+								outFile = roastmanObj['requests'][optionSelectionName]['out']
+
+								resultFile = '{ROASTMAN_COLLECTIONS}/{MAIN_FOLDER}/{OUT_FOLDER}'.format(
+										ROASTMAN_COLLECTIONS = collectionsPath,
+										MAIN_FOLDER = rn,
+										OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
+									)
+
+								if ifRootPat.match(outFile):
+									resultFile = '{HERE_FOLDER}/{OUT_FOLDER}'.format(
+										HERE_FOLDER = collectionsPath.replace('/roastman_collections', ''),
+										OUT_FOLDER = roastmanObj['requests'][optionSelectionName]['out']
+									)
+
+								helpers.write_file(resultFile, joinedData)
 
 		elif nw:
 			collectionContent = '''{

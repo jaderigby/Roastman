@@ -36,7 +36,7 @@ __You are all set!__
 
 A collection's Settings file (the python file in the collection folder) can take the following parameters:
 
-- Show token call: You can add `"show": True` to the Token settings, if you want the token call, or "handshake" to output to the command line.  Below is an example of a token configured in this way:
+- Show token call: You can add `"show": "true"` to the Token settings, if you want the token call, or "handshake" to output to the command line.  Below is an example of a token configured in this way:
 
 ```
 {
@@ -44,13 +44,11 @@ A collection's Settings file (the python file in the collection folder) can take
         "url": "https://api.optconnect.com/summit/beta/accounts/login/app_secret"
         ,"method": "post"
         ,"config": "token_config.yaml"
-        ,"show": True
+        ,"show": "true"
     }
     ,"requests" : {
         ...
 ```
-
-Note that since this is a python dictionary, the true value is capitalized as `True`.
 
 - Token record: In addition, you can output the token call to a record file, like so:
 
@@ -60,7 +58,7 @@ Note that since this is a python dictionary, the true value is capitalized as `T
         "url": "https://api.optconnect.com/summit/beta/accounts/login/app_secret"
         ,"method": "post"
         ,"config": "token_config.yaml"
-        ,"show": True
+        ,"show": "true"
         ,"record": "records/token.yaml"
     }
     ,"requests" : {
